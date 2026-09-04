@@ -72,3 +72,16 @@ type Call = ();
 }
 
 
+struct MyServer {}
+
+#[async_trait]
+
+impl ezsockets::ServerExt for MyServer {
+    //
+}
+#[tokio::main] 
+
+async fn main() {
+let (server, _) = ezsockets::Server::create(|_| MyServer {});
+ezsockets::tungstenite::run(server, "127.0.0.1:8080").await.unwrap();
+}
