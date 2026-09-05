@@ -14,7 +14,7 @@ impl ezsockets::SessionExt for EchoSession {
     type ID = SessionID;
     type Call = ();
 
-    fn id(&self) ->  &Self::ID {
+    fn id(&self) -> &Self::ID {
         &self.id
     }
 
@@ -23,65 +23,62 @@ impl ezsockets::SessionExt for EchoSession {
     }
 
     async fn on_text(&mut self, text: ezsockets::Utf8Bytes) -> Result<(), ezsockets::Error> {
-        self.handle.text(text); 
+        self.handle.text(text);
         Ok(())
     }
-    
+
     async fn on_call(&mut self, call: Self::Call) -> Result<(), ezsockets::Error> {
         let () = call;
         Ok(())
     }
 }
 
-
-use ezsockets::{Request, Server};
-use tokio::runtime::Id;
+use ezsockets::{Request, Server, Socket};
 use std::net::SocketAddr;
+use tokio::runtime::Id;
+use tokio_tungstenite::tungstenite::http::request;
 
-struct EchoSession {}
-
-#[async_trait] 
+#[async_trait]
 impl ezsockets::ServerExt for EchoSession {
-type Session = EchoSession;
-type Call = ();
+    type Session = EchoSession;
+    type Call = ();
 
     async fn on_connect(
         &mut self,
         socket: ezsockets::Socket,
         request: ezsockets::Request,
         address: SocketAddr,
-    ) -> Result<Session, Option<ezsockets::CloseFrame> {
-        let Id = address.port();
+    ) -> Result<Session, Option<ezsockets::CloseFrame>> {
+        let id = address.port();
         let session = Session::create(|handle| EchoSession { id, handle }, id, socket);
-        Ok(Session)
+        Ok(session)
     }
-    
+
     async fn on_disconnect(
-         &mut self,
-         _id:  <Self::Session as ezsockets::SessionExt>::ID,
-         _reason: Result<Option<ezsockets::CloseFrame>, ezsockets::Error>,
+        &mut self,
+        _id: <Self::Session as ezsockets::SessionExt>::ID,
+        _reason: Result<Option<ezsockets::CloseFrame>, ezsockets::Error>,
     ) -> Result<(), ezsockets::Error> {
         Ok(())
     }
 
-
     async fn on_call(&mut self, call: Self::Call) -> Result<(), ezsockets::Error> {
         let () = call;
         Ok(())
-    } 
+    }
 }
 
-
-struct MainServer {}
+struct MyServer {}
 
 #[async_trait]
-
-impl ezsockets::ServerExt for MainServer {
-    //
+impl ezsockets::ServerExt for MyServer {
+    // ...
 }
-#[tokio::main] 
 
+#[tokio::main]
 async fn main() {
-let (server, _) = ezsockets::Server::create(|_| MainServer {});
-ezsockets::tungstenite::run(server, "127.0.0.1:8080").await.unwrap();
+    let (server, _) = ezsockets::Server::create(|_| MyServer {});
+    ezsockets::tungstenite::run(server, "127.0.0.1:8080")
+        .await
+        .unwrap();
 }
