@@ -1,17 +1,18 @@
 use async_trait::async_trait;
+use ezsockets::{CloseFrame, Error, Server, ServerExt, Session, SessionExt};
+use std::net::SocketAddr;
+use std::sync::atomic::{AtomicU16, Ordering};
 
-type SessionID = u16;
-type Session = ezsockets::Session<SessionID, ()>;
-
-struct EchoSession {
-    handle: Session,
-    id: SessionID,
+static NEXT_ID: AtomicU16 = AtomicU16::new(1);
+pub struct EchoSession {
+    pub id: u16,
+    pub handle: ezsockets::Session<u16, ()>, // Handle для отправки сообщений
 }
 
 #[async_trait]
 
 impl ezsockets::SessionExt for EchoSession {
-    type ID = SessionID;
+    type ID = u16;
     type Call = ();
 
     fn id(&self) -> &Self::ID {
@@ -19,11 +20,13 @@ impl ezsockets::SessionExt for EchoSession {
     }
 
     async fn on_binary(&mut self, _bytes: ezsockets::Bytes) -> Result<(), ezsockets::Error> {
-        unimplemented!()
+        Ok(())
     }
 
     async fn on_text(&mut self, text: ezsockets::Utf8Bytes) -> Result<(), ezsockets::Error> {
-        self.handle.text(text);
+        println!("Received from {:?} : {:?}", self.id, text);
+        self.handle.text(text)?;
+
         Ok(())
     }
 
@@ -33,44 +36,37 @@ impl ezsockets::SessionExt for EchoSession {
     }
 }
 
-use ezsockets::{Request, Server, Socket, session};
-use std::net::SocketAddr;
-use tokio::runtime::Id;
-use tokio_tungstenite::tungstenite::http::request;
+// #[async_trait]
+// impl ezsockets::ServerExt for EchoSession {
+//     type Session = EchoSession;
+//     type Call = ();
 
-#[async_trait]
-impl ezsockets::ServerExt for EchoSession {
-    type Session = EchoSession;
-    type Call = ();
+//     async fn on_connect(
+//         &mut self,
+//         socket: ezsockets::Socket,
+//         request: ezsockets::Request,
+//         address: SocketAddr,
+//     ) -> Result<Session, Option<ezsockets::CloseFrame>> {
+//         let id = address.port();
+//         let session = Session::create(|handle| EchoSession { id, handle }, id, socket);
+//         Ok(session)
+//     }
 
-    async fn on_connect(
-        &mut self,
-        socket: ezsockets::Socket,
-        request: ezsockets::Request,
-        address: SocketAddr,
-    ) -> Result<Session, Option<ezsockets::CloseFrame>> {
-        let id = address.port();
-        let session = Session::create(|handle| EchoSession { id, handle }, id, socket);
-        Ok(session)
-    }
+//     async fn on_disconnect(
+//         &mut self,
+//         _id: <Self::Session as ezsockets::SessionExt>::ID,
+//         _reason: Result<Option<ezsockets::CloseFrame>, ezsockets::Error>,
+//     ) -> Result<(), ezsockets::Error> {
+//         Ok(())
+//     }
 
-    async fn on_disconnect(
-        &mut self,
-        _id: <Self::Session as ezsockets::SessionExt>::ID,
-        _reason: Result<Option<ezsockets::CloseFrame>, ezsockets::Error>,
-    ) -> Result<(), ezsockets::Error> {
-        Ok(())
-    }
+//     async fn on_call(&mut self, call: Self::Call) -> Result<(), ezsockets::Error> {
+//         let () = call;
+//         Ok(())
+//     }
+// }
 
-    async fn on_call(&mut self, call: Self::Call) -> Result<(), ezsockets::Error> {
-        let () = call;
-        Ok(())
-    }
-}
-
-struct MainServer {
-    sessions: Vec<EchoSession>,
-}
+struct MainServer {}
 
 #[async_trait]
 impl ezsockets::ServerExt for MainServer {
