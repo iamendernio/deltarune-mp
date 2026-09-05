@@ -5,7 +5,7 @@ type Session = ezsockets::Session<SessionID, ()>;
 
 struct EchoSession {
     handle: Session,
-    id: SeasonId,
+    id: SessionID,
 }
 
 #[async_trait]
@@ -41,7 +41,7 @@ use std::net::SocketAddr;
 struct EchoSession {}
 
 #[async_trait] 
-impl ezsockets::ServerExt for EchoServer {
+impl ezsockets::ServerExt for EchoSession {
 type Session = EchoSession;
 type Call = ();
 
@@ -72,16 +72,16 @@ type Call = ();
 }
 
 
-struct MyServer {}
+struct MainServer {}
 
 #[async_trait]
 
-impl ezsockets::ServerExt for MyServer {
+impl ezsockets::ServerExt for MainServer {
     //
 }
 #[tokio::main] 
 
 async fn main() {
-let (server, _) = ezsockets::Server::create(|_| MyServer {});
+let (server, _) = ezsockets::Server::create(|_| MainServer {});
 ezsockets::tungstenite::run(server, "127.0.0.1:8080").await.unwrap();
 }
