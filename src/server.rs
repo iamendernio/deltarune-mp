@@ -70,6 +70,9 @@ struct MainServer {}
 
 #[async_trait]
 impl ezsockets::ServerExt for MainServer {
+    type Session = EchoSession;
+    type Call = ();
+
     async fn on_connect(
         &mut self,
         socket: ezsockets::Socket,
@@ -82,7 +85,7 @@ impl ezsockets::ServerExt for MainServer {
         >,
         Option<ezsockets::CloseFrame>,
     > {
-        let id = address.port();
+        let id = NEXT_ID.fetch_add(1, Ordering::SeqCst);
         let session = Session::create(|handle| EchoSession { handle, id }, id, socket);
         Ok(session)
     }
@@ -92,6 +95,10 @@ impl ezsockets::ServerExt for MainServer {
         _id: <Self::Session as ezsockets::SessionExt>::ID,
         _reason: Result<Option<ezsockets::CloseFrame>, ezsockets::Error>,
     ) -> Result<(), ezsockets::Error> {
+        print!("Disconnected: {}", _id);
+        Ok(())
+    }
+    async fn on_call(&mut self, call: Self::Call) -> Result<(), Error> {
         Ok(())
     }
 }
