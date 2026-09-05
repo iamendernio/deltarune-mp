@@ -33,7 +33,7 @@ impl ezsockets::SessionExt for EchoSession {
     }
 }
 
-use ezsockets::{Request, Server, Socket};
+use ezsockets::{Request, Server, Socket, session};
 use std::net::SocketAddr;
 use tokio::runtime::Id;
 use tokio_tungstenite::tungstenite::http::request;
@@ -68,16 +68,41 @@ impl ezsockets::ServerExt for EchoSession {
     }
 }
 
-struct MyServer {}
+struct MainServer {
+    sessions: Vec<EchoSession>,
+}
 
 #[async_trait]
-impl ezsockets::ServerExt for MyServer {
-    // ...
+impl ezsockets::ServerExt for MainServer {
+    async fn on_connect(
+        &mut self,
+        socket: ezsockets::Socket,
+        request: ezsockets::Request,
+        address: SocketAddr,
+    ) -> Result<
+        ezsockets::Session<
+            <Self::Session as ezsockets::SessionExt>::ID,
+            <Self::Session as ezsockets::SessionExt>::Call,
+        >,
+        Option<ezsockets::CloseFrame>,
+    > {
+        let id = address.port();
+        let session = Session::create(|handle| EchoSession { handle, id }, id, socket);
+        Ok(session)
+    }
+
+    async fn on_disconnect(
+        &mut self,
+        _id: <Self::Session as ezsockets::SessionExt>::ID,
+        _reason: Result<Option<ezsockets::CloseFrame>, ezsockets::Error>,
+    ) -> Result<(), ezsockets::Error> {
+        Ok(())
+    }
 }
 
 #[tokio::main]
 async fn main() {
-    let (server, _) = ezsockets::Server::create(|_| MyServer {});
+    let (server, _) = ezsockets::Server::create(|_| MainServer {});
     ezsockets::tungstenite::run(server, "127.0.0.1:8080")
         .await
         .unwrap();
