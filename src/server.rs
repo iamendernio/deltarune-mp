@@ -6,7 +6,7 @@ use std::sync::atomic::{AtomicU16, Ordering};
 static NEXT_ID: AtomicU16 = AtomicU16::new(1);
 pub struct EchoSession {
     pub id: u16,
-    pub handle: ezsockets::Session<u16, ()>, // Handle для отправки сообщений
+    pub handle: ezsockets::Session<u16, ()>,
 }
 
 #[async_trait]
