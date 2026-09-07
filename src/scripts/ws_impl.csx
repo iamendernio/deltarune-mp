@@ -1,5 +1,7 @@
 EnsureDataLoaded();
 
+#region "TODO: find all needed code, rewrite some bullshit"
+#endregion
 UndertaleModLib.Compiler.CodeImportGroup importGroup = new(Data)
 {
     ThrowOnNoOpFindReplace = true,
