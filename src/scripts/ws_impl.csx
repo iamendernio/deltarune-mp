@@ -49,7 +49,7 @@ importGroup.QueueFindReplace(
 );
 
 string stepNetworkCode = @"
-// === MULTIPLAYER UPDATE ===
+#region ""stepNetworkCode""
 if (global.sock != -1) {
     var buff = buffer_create(1024, buffer_fixed, 1);
     var msg = ""move|"" + string(x) + ""|"" + string(y);
@@ -57,7 +57,7 @@ if (global.sock != -1) {
     network_send_raw(global.sock, buff, buffer_get_size(buff), network_send_text);
     buffer_delete(buff);
 }
-// === END MULTIPLAYER UPDATE ===
+#endregion
 ";
 
 importGroup.QueueFindReplace(
@@ -68,7 +68,7 @@ importGroup.QueueFindReplace(
 
 
 string drawNetworkCode = @"
-#region ""multiplayer draw code""
+#region ""drawNetworkCode""
 var players = global.players;
 var keys = ds_map_keys(players);
 for (var i = 0; i < ds_list_size(keys); i++) {
@@ -90,7 +90,7 @@ importGroup.QueueFindReplace(
 );
 
 string asyncNetworkCode = @"
-#region ""multiplayer async code""
+#region ""asyncNetworkCode""
 var async_id = ds_map_find_value(async_load, ""id"");
 if (async_id == global.sock) {
     var type = ds_map_find_value(async_load, ""type"");
