@@ -102,8 +102,8 @@ if (async_id == global.sock) {
 
 importGroup.QueueFindReplace(
     asyncHelperCode,
-    "some dumb shit",
-    asyncNetworkCode + "\nsome dumb shit"
+    "switch_asyncPause();",
+    asyncNetworkCode + "\nswitch_asyncPause();"
 );
 
 string drawNetworkCode = @"
