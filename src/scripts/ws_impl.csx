@@ -97,7 +97,8 @@ if (async_id == global.sock) {
         }
     }
 }
-#endregion ";
+#endregion 
+";
 
 importGroup.QueueFindReplace(
     asyncHelperCode,
