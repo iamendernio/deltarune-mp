@@ -29,6 +29,13 @@ if (Data.Code.ByName("gml_Object_obj_mainchara_Draw_0") is not UndertaleCode pla
     ScriptError("Failed to find player draw event.");
     return;
 }
+
+if (Data.Code.ByName("gml_Object_obj_switchAsyncHelper_Other_75") is not UndertaleCode asyncHelperCode)
+{
+    ScriptError("Failed to find switchAsyncHelper async event.");
+    return;
+}
+
 string createNetworkCode = @"
 #region ""create network code""
 global.sock = network_create_socket(network_socket_ws);
@@ -62,6 +69,41 @@ importGroup.QueueFindReplace(
     stepNetworkCode + "\nif (global.CurrentKrisState != global.KrisStates.Walking) {"
 );
 
+string asyncNetworkCode = @"
+#region ""asyncNetworkCode""
+var async_id = ds_map_find_value(async_load, ""id"");
+if (async_id == global.sock) {
+    var type = ds_map_find_value(async_load, ""type"");
+    if (type == ""text"") {
+        var text = ds_map_find_value(async_load, ""result"");
+        var parts = string_split(text, ""|"");
+        if (array_length(parts) >= 3 && parts[0] == ""move"") {
+            var player_id = real(parts[1]);
+            var player_x = real(parts[2]);
+            var player_y = real(parts[3]);
+            
+            if (global.player_id == -1) {
+                global.player_id = player_id;
+            }
+            
+            if (player_id != global.player_id) {
+                var player_data = global.players[? player_id];
+                if (player_data == undefined) {
+                    global.players[? player_id] = ds_map_create();
+                }
+                global.players[? player_id][? ""x""] = player_x;
+                global.players[? player_id][? ""y""] = player_y;
+            }
+        }
+    }
+}
+#endregion ";
+
+importGroup.QueueFindReplace(
+    asyncHelperCode,
+    "some dumb shit",
+    asyncNetworkCode + "\nsome dumb shit"
+);
 
 string drawNetworkCode = @"
 #region ""drawNetworkCode""
@@ -85,32 +127,7 @@ importGroup.QueueFindReplace(
     "draw_self();\n" + drawNetworkCode
 );
 
-// string asyncNetworkCode = @"
-// #region ""asyncNetworkCode""
-// var async_id = ds_map_find_value(async_load, ""id"");
-// if (async_id == global.sock) {
-//     var type = ds_map_find_value(async_load, ""type"");
-//     if (type == ""text"") {
-//         var json = ds_map_find_value(async_load, ""result"");
-//         var data = json_decode(json);
-//         var player_id = data[? ""id""];
-//         var player_x = data[? ""x""];
-//         var player_y = data[? ""y""];
-//         if (global.player_id == -1) {
-//             global.player_id = player_id;
-//         }
-//         if (player_id != global.player_id) {
-//             var player_data = global.players[? player_id];
-//             if (player_data == undefined) {
-//                 global.players[? player_id] = ds_map_create();
-//             }
-//             global.players[? player_id][? ""x""] = player_x;
-//             global.players[? player_id][? ""y""] = player_y;
-//         }
-//     }
-// }
-// #endregion
-// ";
+
 
 
 importGroup.Import();
