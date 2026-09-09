@@ -66,7 +66,7 @@ impl ezsockets::SessionExt for EchoSession {
 //     }
 // }
 
-struct MainServer {}
+pub struct MainServer {}
 
 #[async_trait]
 impl ezsockets::ServerExt for MainServer {
