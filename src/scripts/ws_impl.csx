@@ -78,8 +78,6 @@ if (ds_map_exists(async_load, ""id"")) {
         var type = ds_map_find_value(async_load, ""type"");
         if (type == ""text"") {
             var text = ds_map_find_value(async_load, ""result"");
-            
-            // Ручной сплит по |
             var parts = [];
             var str = text;
             var sep = ""|"";
@@ -100,6 +98,10 @@ if (ds_map_exists(async_load, ""id"")) {
                     global.player_id = player_id;
                 }
                 
+                if (parts[0] == ""your_id"") {
+                global.player_id = real(parts[1]);
+                }
+
                 if (player_id != global.player_id) {
                     var player_data = global.players[? player_id];
                     if (player_data == undefined) {

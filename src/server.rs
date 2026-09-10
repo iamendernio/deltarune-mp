@@ -87,6 +87,9 @@ impl ezsockets::ServerExt for MainServer {
     > {
         let id = NEXT_ID.fetch_add(1, Ordering::SeqCst);
         let session = Session::create(|handle| EchoSession { handle, id }, id, socket);
+
+        session.text(format!("your_id|{}", id));
+
         Ok(session)
     }
 
