@@ -17,9 +17,10 @@ if (Data.Code.ByName("gml_Object_obj_mainchara_Create_0") is not UndertaleCode p
 }
 
 
-if (Data.Code.ByName("gml_Object_obj_mainchara_Step_0") is not UndertaleCode playerStepCode)
+
+if (Data.Code.ByName("gml_Object_obj_mainchara_Step_2") is not UndertaleCode playerStepCode)
 {
-    ScriptError("Failed to find gml_Object_obj_mainchara_Step_0");
+    ScriptError("Failed to find gml_Object_obj_mainchara_Step_2");
     return;
 }
 
@@ -65,39 +66,53 @@ if (global.sock != -1) {
 
 importGroup.QueueFindReplace(
     playerStepCode,
-    "if (global.CurrentKrisState != global.KrisStates.Walking) {",
-    stepNetworkCode + "\nif (global.CurrentKrisState != global.KrisStates.Walking) {"
+    "if (bg == 1)",
+    stepNetworkCode + "\nif (bg == 1)"
 );
 
 string asyncNetworkCode = @"
 #region ""asyncNetworkCode""
-var async_id = ds_map_find_value(async_load, ""id"");
-if (async_id == global.sock) {
-    var type = ds_map_find_value(async_load, ""type"");
-    if (type == ""text"") {
-        var text = ds_map_find_value(async_load, ""result"");
-        var parts = string_split(text, ""|"");
-        if (array_length(parts) >= 3 && parts[0] == ""move"") {
-            var player_id = real(parts[1]);
-            var player_x = real(parts[2]);
-            var player_y = real(parts[3]);
+if (ds_map_exists(async_load, ""id"")) {
+    var async_id = ds_map_find_value(async_load, ""id"");
+    if (async_id == global.sock) {
+        var type = ds_map_find_value(async_load, ""type"");
+        if (type == ""text"") {
+            var text = ds_map_find_value(async_load, ""result"");
             
-            if (global.player_id == -1) {
-                global.player_id = player_id;
+            // Ручной сплит по |
+            var parts = [];
+            var str = text;
+            var sep = ""|"";
+            var pos = string_pos(sep, str);
+            while (pos > 0) {
+                array_push(parts, string_copy(str, 1, pos - 1));
+                str = string_delete(str, 1, pos);
+                pos = string_pos(sep, str);
             }
+            array_push(parts, str);
             
-            if (player_id != global.player_id) {
-                var player_data = global.players[? player_id];
-                if (player_data == undefined) {
-                    global.players[? player_id] = ds_map_create();
+            if (array_length(parts) >= 3 && parts[0] == ""move"") {
+                var player_id = real(parts[1]);
+                var player_x = real(parts[2]);
+                var player_y = real(parts[3]);
+                
+                if (global.player_id == -1) {
+                    global.player_id = player_id;
                 }
-                global.players[? player_id][? ""x""] = player_x;
-                global.players[? player_id][? ""y""] = player_y;
+                
+                if (player_id != global.player_id) {
+                    var player_data = global.players[? player_id];
+                    if (player_data == undefined) {
+                        global.players[? player_id] = ds_map_create();
+                    }
+                    global.players[? player_id][? ""x""] = player_x;
+                    global.players[? player_id][? ""y""] = player_y;
+                }
             }
         }
     }
 }
-#endregion 
+#endregion
 ";
 
 importGroup.QueueFindReplace(
