@@ -164,6 +164,7 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "ezsockets",
+ "once_cell",
  "tokio",
  "tokio-tungstenite 0.30.0",
 ]

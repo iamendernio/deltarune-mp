@@ -56,7 +56,7 @@ string stepNetworkCode = @"
 #region ""stepNetworkCode""
 if (global.sock > 0 && global.player_id > 0) {
     var buff = buffer_create(1024, buffer_fixed, 1);
-    var msg = ""move|"" + string(global.player_id) + ""|"" + string(x) + ""|"" + string(y);
+    var msg = ""move|"" + string(x) + ""|"" + string(y);
     buffer_write(buff, buffer_string, msg);
     network_send_raw(global.sock, buff, buffer_get_size(buff), network_send_text);
     buffer_delete(buff);

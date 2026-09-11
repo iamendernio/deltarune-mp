@@ -1,7 +1,10 @@
 use async_trait::async_trait;
 use ezsockets::{CloseFrame, Error, Server, ServerExt, Session, SessionExt};
+use std::collections::HashMap;
 use std::net::SocketAddr;
+use std::sync::Arc;
 use std::sync::atomic::{AtomicU16, Ordering};
+use tokio::sync::{Mutex, broadcast};
 
 static NEXT_ID: AtomicU16 = AtomicU16::new(1);
 pub struct EchoSession {
@@ -25,8 +28,15 @@ impl ezsockets::SessionExt for EchoSession {
 
     async fn on_text(&mut self, text: ezsockets::Utf8Bytes) -> Result<(), ezsockets::Error> {
         println!("Received from {:?} : {:?}", self.id, text);
+        let msg = text.to_string();
         self.handle.text(text)?;
 
+        if msg.starts_with("move|") {
+            let coords = &msg[..5];
+            let full_msg = format!("move|{}{}", self.id, coords);
+
+            broadcast_to_others(self.id, &msg).await;
+        }
         Ok(())
     }
 
@@ -66,6 +76,18 @@ impl ezsockets::SessionExt for EchoSession {
 //     }
 // }
 
+static SESSIONS: once_cell::sync::Lazy<Arc<Mutex<HashMap<u16, Session<u16, ()>>>>> =
+    once_cell::sync::Lazy::new(|| Arc::new(Mutex::new(HashMap::new())));
+
+async fn broadcast_to_others(sender_id: u16, msg: &str) {
+    let sessions = SESSIONS.lock().await;
+    for (id, session) in sessions.iter() {
+        if *id != sender_id {
+            let _ = session.text(msg.to_string());
+        }
+    }
+}
+
 pub struct MainServer {}
 
 #[async_trait]
@@ -87,8 +109,11 @@ impl ezsockets::ServerExt for MainServer {
     > {
         let id = NEXT_ID.fetch_add(1, Ordering::SeqCst);
         let session = Session::create(|handle| EchoSession { handle, id }, id, socket);
+        let _ = session.text(format!("your_id|{}", id));
 
-        session.text(format!("your_id|{}", id));
+        println!("Connected {}", id);
+
+        SESSIONS.lock().await.insert(id, session.clone());
 
         Ok(session)
     }
@@ -99,9 +124,10 @@ impl ezsockets::ServerExt for MainServer {
         _reason: Result<Option<ezsockets::CloseFrame>, ezsockets::Error>,
     ) -> Result<(), ezsockets::Error> {
         print!("Disconnected: {}", _id);
+        SESSIONS.lock().await.remove(&_id);
         Ok(())
     }
-    async fn on_call(&mut self, call: Self::Call) -> Result<(), Error> {
+    async fn on_call(&mut self, _call: Self::Call) -> Result<(), Error> {
         Ok(())
     }
 }
