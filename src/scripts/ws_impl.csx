@@ -54,9 +54,9 @@ importGroup.QueueFindReplace(
 
 string stepNetworkCode = @"
 #region ""stepNetworkCode""
-if (global.sock != -1) {
+if (global.sock > 0 && global.player_id > 0) {
     var buff = buffer_create(1024, buffer_fixed, 1);
-    var msg = ""move|"" + string(x) + ""|"" + string(y);
+    var msg = ""move|"" + string(global.player_id) + ""|"" + string(x) + ""|"" + string(y);
     buffer_write(buff, buffer_string, msg);
     network_send_raw(global.sock, buff, buffer_get_size(buff), network_send_text);
     buffer_delete(buff);
@@ -89,19 +89,15 @@ if (ds_map_exists(async_load, ""id"")) {
             }
             array_push(parts, str);
             
-            if (array_length(parts) >= 3 && parts[0] == ""move"") {
+            if (array_length(parts) >= 2 && parts[0] == ""your_id"") {
+                global.player_id = real(parts[1]);
+            }
+            
+            if (array_length(parts) >= 4 && parts[0] == ""move"") {
                 var player_id = real(parts[1]);
                 var player_x = real(parts[2]);
                 var player_y = real(parts[3]);
                 
-                if (global.player_id == -1) {
-                    global.player_id = player_id;
-                }
-                
-                if (parts[0] == ""your_id"") {
-                global.player_id = real(parts[1]);
-                }
-
                 if (player_id != global.player_id) {
                     var player_data = global.players[? player_id];
                     if (player_data == undefined) {
