@@ -48,8 +48,8 @@ global.players = ds_map_create();
 
 importGroup.QueueFindReplace(
     playerCreateCode,
-    "image_xscale = 1;",
-    createNetworkCode + "\nimage_xscale = 1;"
+    "if (darkmode == 1);",
+    createNetworkCode + "\nif (darkmode == 1);"
 );
 
 string stepNetworkCode = @"
